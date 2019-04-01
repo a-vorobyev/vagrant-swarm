@@ -1,0 +1,66 @@
+---
+- name: install docker
+  hosts: all
+  vars:
+    codename: "{{ ansible_lsb.codename }}"
+    machines: []
+
+  tasks:
+
+    - debug:
+        msg: "lsb codename: {{ codename }}"
+
+    - name: apt install deps
+      become: true
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg2
+          - software-properties-common
+        update_cache: true
+        state: present
+
+    - name: apt add key
+      become: true
+      apt_key:
+        url: https://download.docker.com/linux/debian/gpg
+        id: 0EBFCD88
+        state: present
+
+    - name: apt add repository
+      become: true
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{codename}} stable"
+        state: present
+
+    - name: apt install docker
+      become: true
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        update_cache: yes
+        state: present
+
+    - name: install machine
+      shell: |
+        base=https://github.com/docker/machine/releases/download/v0.16.0 &&
+        curl -L $base/docker-machine-$(uname -s)-$(uname -m) >/tmp/docker-machine &&
+        sudo install /tmp/docker-machine /usr/local/bin/docker-machine
+      args:
+        creates: /usr/local/bin/docker-machine
+
+    - name: provision docker machines
+      shell: |
+        docker-machine create -d generic \
+          --generic-ip-address {{ item.ip }} \
+          --generic-ssh-key  {{ item.key }} \
+          --generic-ssh-user vagrant \
+          {{ item.name }}
+      args:
+        creates: /home/vagrant/.docker/machine/machines/{{ item.name }}
+      loop: "{{ machines }}"
+...
