@@ -16,7 +16,7 @@ Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/bionic64"
 
   config.vm.provider "virtualbox" do |v|
-    v.memory = 2048
+    v.memory = 1024
     v.cpus = 2
     v.default_nic_type = "virtio"
   end
@@ -46,19 +46,25 @@ Vagrant.configure("2") do |config|
   # your network.
   # config.vm.network "public_network"
 
-  config.ssh.insert_key = false
+  # config.ssh.insert_key = false
 
   config.vm.define "rider" do |r|
     # r.vm.box = "ubuntu/bionic64"
     r.vm.hostname = "rider"
+    r.vm.provider "virtualbox" do |v|
+      v.memory = 512
+      v.cpus = 1
+    end
     r.vm.network "private_network", ip: "10.10.10.9"
     r.vm.provision "docker", run: 'once', type:"ansible" do |ansible|
       ansible.playbook = "provision/docker.yml"
+      # ansible.install_mode = :pip
       ansible.extra_vars = {
         "ansible_python_interpreter" => "/usr/bin/python3",
         "machines" => [
-          { 'name' => 'horse1', 'ip' => '10.10.10.10', 'key' => '/vagrant/insecure_private_key' },
-          { 'name' => 'horse2', 'ip' => '10.10.10.11', 'key' => '/vagrant/insecure_private_key' }
+          { 'name' => 'horse1', 'ip' => '10.10.10.10', 'key' => '/vagrant/.vagrant/machines/horse1/virtualbox/private_key' },
+          { 'name' => 'horse2', 'ip' => '10.10.10.11', 'key' => '/vagrant/.vagrant/machines/horse2/virtualbox/private_key' },
+          { 'name' => 'horse3', 'ip' => '10.10.10.12', 'key' => '/vagrant/.vagrant/machines/horse3/virtualbox/private_key' }
         ]
       }
       ansible.verbose = true
@@ -73,6 +79,11 @@ Vagrant.configure("2") do |config|
   config.vm.define "horse2" do |h2|
     h2.vm.hostname = "horse2"
     h2.vm.network "private_network", ip: "10.10.10.11"
+  end
+
+  config.vm.define "horse3" do |h2|
+    h2.vm.hostname = "horse3"
+    h2.vm.network "private_network", ip: "10.10.10.12"
   end
 
   # Share an additional folder to the guest VM. The first argument is

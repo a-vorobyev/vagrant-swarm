@@ -1,0 +1,20 @@
+---
+  - name: modify ssh config the restart
+    hosts: all
+    become: yes
+    tasks:
+    - name: tune machine sshd_config
+      lineinfile:
+        path: '/etc/ssh/sshd_config'
+        regexp: '^#(PermitUserEnvironment\s+?)no'
+        line: '\1yes'
+        backrefs: true
+        backup: true
+      register: ssh_config
+
+    - name: Restart ssh
+      service:
+        name: ssh
+        state: restarted
+      when: ssh_config.changed
+...
